@@ -3,8 +3,8 @@ require('./config/config');
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
-const {ObjectID} = require('mongodb');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 const {mongoose} = require('./db/mongoose');
 const {User} = require('./models/user');
@@ -13,19 +13,24 @@ const {authenticate} = require('./middleware/authenticate');
 
 const app = express();
 const port = process.env.PORT;
-app.use(cors());
+
+const corsOptions = {
+    exposedHeaders: 'x-auth',
+  };
+app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(bodyParser.json());
 
-// app.use(function(req, res, next) {
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//     next();
-// });
+
+
 
 
 app.get('/', (req, res) => {
     
     Test.find({}).then((foundTests) => {
+        console.log(req.cookies['x-auth']);
+        
+        
         res.send(foundTests);
     });
 });
@@ -58,7 +63,7 @@ app.patch('/tests/:id', (req, res) => {
 });
 
 
-// ============ SIGN UP
+// ============ SIGN UP=================================
 app.post('/adduser', (req, res) => {
     let extractedProps = _.pick(req.body, ['nick', 'password']);
     let user = new User(extractedProps)
@@ -73,22 +78,38 @@ app.post('/adduser', (req, res) => {
 });
 
 
-//=============== LOGIN
+//=============== LOGIN=============================================
 app.post('/login', (req, res) => {
     let extractedProps = _.pick(req.body, ['nick', 'password']);
 
     User.findByCredentials(extractedProps.nick, extractedProps.password).then((user) => {
         return user.generateAuthToken().then((token) => {
-            res.header('x-auth', token).send(user);
+            console.log('token', token);
+           // res.header('x-auth', token).send(user);
+           res.cookie('x-auth', token).send(user);
         }).catch((e) => {
             res.status(400).send(e);
         });
-    });
+    }).catch((e) => {
+        res.status(400).send(e);
+    })
 });
 
 
+
+//===========================WHOISLOGGED======================================
+
+app.get('/me', authenticate, (req, res) => {
+    console.log('v get/me je token:', req.cookies['x-auth']);
+    
+    res.send(req.user)
+});
+
+
+
+
 //=================== LOGOUT
-//req.user.removeToken and req.token are accessible cause of authenticate middleware which append then to req object
+//req.user.removeToken and req.token are accessible cause of authenticate middleware which appends them to req object
 app.delete('/logout', authenticate, (req, res) => {
     req.user.removeToken(req.token).then(() => {
         res.status(200).send('uspesne odhlasen')

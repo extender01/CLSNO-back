@@ -1,5 +1,5 @@
 {
-  "name": "exterky",
+  "name": "clsno-backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,13 +9,14 @@
     "test-watch": "nodemon --exec \"npm test\""
   },
   "engines": {
-    "node": "6.2.2"
+    "node": "8.11.1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
     "express": "^4.16.3",
     "jsonwebtoken": "^8.3.0",
